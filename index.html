@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard UMKM TASTE.KI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #8b7cc8;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+  padding: 14px;
+  color: #fff;
+}
+.dash { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+/* TOP */
+.top-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: stretch; }
+.title-box { background:#6d5eac; border:2px solid #c4b8f0; border-radius:8px; padding:14px 20px; display:flex; align-items:center; }
+.title-box h1 { font-size:20px; font-weight:900; letter-spacing:0.5px; }
+.kpi-box { background:#6d5eac; border:2px solid #c4b8f0; border-radius:8px; padding:12px 28px; text-align:center; min-width:190px; }
+.kpi-label { font-size:10px; font-weight:800; color:#d4c8f5; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+.kpi-value { font-size:34px; font-weight:900; line-height:1.1; }
+
+/* PANELS */
+.panel { background:#7a6bbf; border:1.5px solid #b0a0df; border-radius:8px; padding:12px; }
+.panel-title { font-size:11px; font-weight:800; color:#e8e0ff; text-align:center; margin-bottom:10px; letter-spacing:0.06em; text-transform:uppercase; }
+
+/* MID ROW */
+.mid-row { display:grid; grid-template-columns:185px 1fr 310px; gap:12px; align-items:start; }
+.mid-left { display:flex; flex-direction:column; gap:12px; }
+.mid-center { display:flex; flex-direction:column; gap:12px; }
+
+/* VARIAN */
+.varian-list { display:flex; flex-direction:column; gap:5px; max-height:160px; overflow-y:auto; padding-right:4px; }
+.varian-list::-webkit-scrollbar { width:4px; }
+.varian-list::-webkit-scrollbar-thumb { background:#a898d8; border-radius:2px; }
+.varian-item { display:flex; align-items:center; gap:7px; font-size:11px; color:#e0d8ff; cursor:pointer; }
+.varian-item input[type=checkbox] { accent-color:#fff; width:12px; height:12px; cursor:pointer; }
+
+/* DATE */
+.date-row { display:flex; align-items:center; gap:6px; justify-content:center; margin-bottom:10px; }
+.date-row input[type=date] { background:#8878c8; border:1px solid #b8a9e0; border-radius:4px; color:#fff; font-size:10px; padding:4px 6px; cursor:pointer; outline:none; }
+.date-row input[type=date]::-webkit-calendar-picker-indicator { filter:invert(1); opacity:0.8; }
+
+/* BOT ROW */
+.bot-row { display:grid; grid-template-columns:310px 1fr 310px; gap:12px; align-items:start; }
+
+/* INFO GRID */
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.info-card { background:rgba(0,0,0,0.18); border-radius:6px; padding:9px; text-align:center; }
+.info-card .ic-val { font-size:17px; font-weight:800; }
+.info-card .ic-lbl { font-size:9px; color:#ccc4ee; margin-top:2px; text-transform:uppercase; letter-spacing:0.06em; }
+
+/* SEGMENT */
+.seg-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.seg-name { font-size:10px; color:#e0d8ff; min-width:85px; }
+.seg-bar-wrap { flex:1; height:8px; background:rgba(0,0,0,0.2); border-radius:4px; overflow:hidden; }
+.seg-bar { height:100%; border-radius:4px; }
+.seg-pct { font-size:10px; color:#ccc4ee; min-width:38px; text-align:right; }
+
+/* LEGEND */
+.legend-wrap { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; justify-content:center; }
+.leg-item { display:flex; align-items:center; gap:4px; font-size:10px; color:#ddd8ff; }
+.leg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+/* DONUT LEGEND */
+.donut-legend { max-height:110px; overflow-y:auto; margin-top:8px; }
+.donut-legend::-webkit-scrollbar { width:4px; }
+.donut-legend::-webkit-scrollbar-thumb { background:#a898d8; border-radius:2px; }
+.dleg-item { display:flex; align-items:center; gap:6px; font-size:10px; color:#ddd8ff; margin-bottom:4px; }
+
+/* GENDER */
+.gender-row { display:flex; height:20px; border-radius:6px; overflow:hidden; margin-top:4px; }
+.gender-male { background:#3b82f6; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+.gender-female { background:#ec4899; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+
+.chart-wrap { position:relative; width:100%; }
+</style>
+</head>
+<body>
+<div class="dash">
+
+  <!-- TOP -->
+  <div class="top-row">
+    <div class="title-box"><h1>DASHBOARD UMKM TASTE.KI</h1></div>
+    <div class="kpi-box">
+      <div class="kpi-label">Total Pendapatan</div>
+      <div class="kpi-value" id="kpiPendapatan">—</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-label">Jumlah Produk Terjual</div>
+      <div class="kpi-value" id="kpiProduk">—</div>
+    </div>
+  </div>
+
+  <!-- MID -->
+  <div class="mid-row">
+    <div class="mid-left">
+      <div class="panel">
+        <div class="panel-title">Jenis Varian</div>
+        <div class="varian-list" id="varianList"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Demografi</div>
+        <div style="font-size:10px;color:#ccc4ee;margin-bottom:4px;text-align:center;">Gender Pelanggan</div>
+        <div class="gender-row">
+          <div class="gender-male" style="width:57%;">Pria 57%</div>
+          <div class="gender-female" style="width:43%;">Wanita 43%</div>
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:#ccc4ee;text-align:center;">Rata-rata Usia: <strong style="color:#fff;">23,6 thn</strong></div>
+        <div style="font-size:10px;color:#ccc4ee;text-align:center;margin-top:3px;">Rentang: 20–27 tahun</div>
+      </div>
+    </div>
+
+    <div class="mid-center">
+      <div class="panel">
+        <div class="panel-title">Rentang Waktu</div>
+        <div class="date-row">
+          <input type="date" id="dateStart" value="2025-10-01" onchange="applyFilter()">
+          <span style="color:#d4c8f5;">→</span>
+          <input type="date" id="dateEnd" value="2025-10-31" onchange="applyFilter()">
+        </div>
+        <div class="info-grid">
+          <div class="info-card"><div class="ic-val" id="infoTrx">157</div><div class="ic-lbl">Total Transaksi</div></div>
+          <div class="info-card"><div class="ic-val" id="infoProdukUnik">34</div><div class="ic-lbl">Varian Produk</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Tren Data Penjualan (Qty / Hari)</div>
+        <div class="chart-wrap" style="height:168px;">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="panel">
+        <div class="panel-title">Metode Pembayaran</div>
+        <div class="chart-wrap" style="height:130px;">
+          <canvas id="paymentChart"></canvas>
+        </div>
+        <div class="legend-wrap">
+          <span class="leg-item"><span class="leg-dot" style="background:#1a237e;"></span>QRIS: 82 (52.2%)</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#42a5f5;"></span>Tunai: 75 (47.8%)</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Segmen Pelanggan (RFM)</div>
+        <div id="segList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bot-row">
+    <div class="panel">
+      <div class="panel-title">Kuantitas Produk Terjual</div>
+      <div class="chart-wrap" style="height:250px;">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Tren Pendapatan Harian (Rp)</div>
+      <div class="chart-wrap" style="height:195px;">
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="info-grid">
+          <div class="info-card"><div class="ic-val" id="avgTrx">Rp109K</div><div class="ic-lbl">Rata-rata/Transaksi</div></div>
+          <div class="info-card"><div class="ic-val" id="peakDay">Rp1,48Jt</div><div class="ic-lbl">Pendapatan Tertinggi</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Presentasi Total Penjualan</div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="donutChart"></canvas>
+      </div>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════ DATA ASLI EXCEL ══════════ */
+const RAW = [
+  ['2025-10-01','Strawberry Matcha',1,25000,'Tunai','Others'],
+  ['2025-10-01','Kopi Browni',1,25000,'Tunai','Others'],
+  ['2025-10-01','Kopi Browni',1,25000,'Tunai','Others'],
+  ['2025-10-01','Matcha',1,25000,'Qris','Others'],
+  ['2025-10-01','Strawberry Matcha',1,25000,'Qris','Others'],
+  ['2025-10-01','Strawberry Matcha',1,25000,'Qris','Champion'],
+  ['2025-10-01','Kopi Browni',1,471000,'Qris','Others'],
+  ['2025-10-02','Kopi Browni',1,25000,'Qris','Others'],
+  ['2025-10-02','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-02','Aqua',1,85000,'Qris','Champion'],
+  ['2025-10-03','Kopi Browni',1,25000,'Tunai','Others'],
+  ['2025-10-03','Kopi Browni',1,25000,'Qris','Others'],
+  ['2025-10-03','Americano',1,105000,'Tunai','Champion'],
+  ['2025-10-03','Americano',1,85000,'Tunai','Champion'],
+  ['2025-10-04','Strawberry Matcha',1,25000,'Qris','Champion'],
+  ['2025-10-04','Strawberry Matcha',1,25000,'Qris','Champion'],
+  ['2025-10-04','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-04','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-04','Aqua',1,85000,'Qris','Champion'],
+  ['2025-10-04','Teh Tarik',1,132500,'Tunai','Others'],
+  ['2025-10-05','Kopi Flora',1,155000,'Qris','Champion'],
+  ['2025-10-05','Kopi Flora',1,155000,'Qris','Champion'],
+  ['2025-10-05','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-05','Matcha',1,100000,'Qris','Others'],
+  ['2025-10-05','Kentang Goreng',1,90000,'Tunai','New Customer'],
+  ['2025-10-05','Aqua',1,50000,'Tunai','Others'],
+  ['2025-10-06','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-06','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-06','Kopi Caramel',1,133000,'Qris','Others'],
+  ['2025-10-06','Extra Shot',1,156000,'Qris','Others'],
+  ['2025-10-06','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-06','Extra Shot',1,156000,'Qris','Others'],
+  ['2025-10-06','Kopi Browni',1,120000,'Qris','Others'],
+  ['2025-10-07','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-07','Kopi Browni',1,230000,'Qris','Champion'],
+  ['2025-10-08','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-08','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-09','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-09','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-09','Lemon Tea',1,82000,'Qris','Others'],
+  ['2025-10-09','Nasi Jeruk',1,127000,'Tunai','Others'],
+  ['2025-10-09','Teh Tarik',1,107500,'Tunai','Others'],
+  ['2025-10-09','Nasi Jeruk',1,115500,'Tunai','Others'],
+  ['2025-10-10','Kopi Caramel',1,133000,'Qris','Others'],
+  ['2025-10-10','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-10','Kopi Flora',1,155000,'Qris','Champion'],
+  ['2025-10-10','Strawberry Matcha',1,107000,'Qris','Others'],
+  ['2025-10-10','Lemon Tea',1,55000,'Tunai','Others'],
+  ['2025-10-11','Americano',1,105000,'Tunai','Champion'],
+  ['2025-10-11','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-11','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-11','Aneka Roti',1,45000,'Qris','New Customer'],
+  ['2025-10-12','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-12','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-12','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-12','Matcha',1,100000,'Qris','Others'],
+  ['2025-10-12','Strawberry Milk',1,80000,'Tunai','Others'],
+  ['2025-10-12','Kopi Browni',1,55000,'Tunai','Others'],
+  ['2025-10-13','Teh Tarik',1,107500,'Tunai','Others'],
+  ['2025-10-13','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-13','Vanilla Bland',1,95000,'Qris','Others'],
+  ['2025-10-13','Lemon Tea',1,52500,'Tunai','Others'],
+  ['2025-10-14','Aneka Roti',1,34000,'Tunai','New Customer'],
+  ['2025-10-14','Aneka Roti',1,34000,'Tunai','New Customer'],
+  ['2025-10-14','Aneka Roti',1,34000,'Tunai','New Customer'],
+  ['2025-10-14','Aqua',1,68000,'Tunai','Champion'],
+  ['2025-10-15','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-15','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-15','Nasi Jeruk',1,115500,'Tunai','Others'],
+  ['2025-10-15','Kopi Flora',1,155000,'Qris','Champion'],
+  ['2025-10-15','Matcha',1,100000,'Qris','Others'],
+  ['2025-10-15','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-15','Thai Tea',1,85500,'Tunai','Others'],
+  ['2025-10-16','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-16','Aqua',1,89000,'Tunai','Champion'],
+  ['2025-10-17','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-17','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-17','Kentang Goreng',1,90000,'Tunai','New Customer'],
+  ['2025-10-17','Teh Tarik',1,10000,'Tunai','Others'],
+  ['2025-10-17','Lemon Tea',1,55000,'Tunai','Others'],
+  ['2025-10-18','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-18','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-18','Kopi Browni',1,55000,'Tunai','Others'],
+  ['2025-10-18','Americano',1,60000,'Qris','Others'],
+  ['2025-10-18','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-18','Strawberry Milk',1,80000,'Qris','Others'],
+  ['2025-10-18','Chiken Ricebowl',1,140000,'Qris','New Customer'],
+  ['2025-10-18','Pisang Goreng',1,85000,'Tunai','Others'],
+  ['2025-10-18','Vanilla Bland',1,95000,'Tunai','Others'],
+  ['2025-10-19','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-19','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-19','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-19','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-19','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-19','Nasi Goreng',1,105000,'Qris','Others'],
+  ['2025-10-19','Choco Milky',1,60000,'Tunai','Others'],
+  ['2025-10-19','Matcha',1,50000,'Qris','Others'],
+  ['2025-10-19','Thai Tea',1,85500,'Tunai','Others'],
+  ['2025-10-19','Choko Milky',1,70000,'Tunai','Others'],
+  ['2025-10-19','Taro Shake',1,140000,'Qris','Others'],
+  ['2025-10-20','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-20','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-20','Strawberry Milk',1,80000,'Tunai','Others'],
+  ['2025-10-20','Pisang Goreng',1,85000,'Tunai','Others'],
+  ['2025-10-21','Kopi Caramel',1,133000,'Qris','Others'],
+  ['2025-10-21','Americano',1,85000,'Qris','Others'],
+  ['2025-10-21','Kopi Browni',1,15000,'Tunai','Others'],
+  ['2025-10-22','Thai Tea',1,85500,'Tunai','Others'],
+  ['2025-10-22','Taro Shake',1,140000,'Qris','Others'],
+  ['2025-10-22','Lychee Tea',1,118000,'Qris','New Customer'],
+  ['2025-10-23','Americano',1,105000,'Tunai','Champion'],
+  ['2025-10-23','Kentang Goreng',1,130000,'Tunai','New Customer'],
+  ['2025-10-24','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-24','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-24','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-24','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-24','Nasi Goreng',1,105000,'Qris','Others'],
+  ['2025-10-24','Strawberry Milk',1,100000,'Qris','Others'],
+  ['2025-10-25','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-25','Kopi Flora',1,155000,'Qris','Champion'],
+  ['2025-10-25','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-25','Matcha',1,27000,'Qris','Others'],
+  ['2025-10-26','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-26','Kopi Pistachio',1,125000,'Tunai','New Customer'],
+  ['2025-10-27','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-27','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-27','Ekspresso Milk',1,117333,'Qris','Others'],
+  ['2025-10-27','Pisang Goreng Palm Sugar',1,67000,'Tunai','Others'],
+  ['2025-10-28','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-28','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-28','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-28','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-28','Kentang Goreng',1,130000,'Tunai','New Customer'],
+  ['2025-10-28','Kopi Pistachio',1,125000,'Tunai','New Customer'],
+  ['2025-10-28','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-28','Teh Tarik',1,60000,'Tunai','Others'],
+  ['2025-10-28','Pisang Goreng',1,85000,'Qris','Others'],
+  ['2025-10-28','Ekspresso Milk',1,117333,'Qris','Others'],
+  ['2025-10-28','Choko Milky',1,70000,'Qris','Others'],
+  ['2025-10-28','Pisang Goreng Coklat',1,30000,'Tunai','Others'],
+  ['2025-10-29','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-29','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-29','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-29','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-29','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-29','Nasi Jeruk',1,150000,'Qris','Others'],
+  ['2025-10-29','Kopi Caramel',1,133000,'Qris','Others'],
+  ['2025-10-29','Kentang Goreng',1,130000,'Tunai','New Customer'],
+  ['2025-10-29','Pisang Goreng Palm Sugar',1,67000,'Tunai','Others'],
+  ['2025-10-29','Pisang Goreng Keju',1,140000,'Qris','Others'],
+  ['2025-10-29','Ekspresso Milk',1,117333,'Qris','Others'],
+  ['2025-10-29','Kopi Browni Ice Americano',1,72500,'Tunai','Others'],
+  ['2025-10-29','Kopi Browni Ice Americano',1,72500,'Qris','Others'],
+  ['2025-10-30','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-30','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-30','Strawberry Milk',1,80000,'Tunai','Others'],
+  ['2025-10-30','Matcha',1,50000,'Qris','Others'],
+  ['2025-10-30','Shakerato Lemon',1,134000,'Qris','New Customer'],
+  ['2025-10-30','Fresh Mango',1,92000,'Tunai','Others'],
+  ['2025-10-30','Choco Milky',1,180000,'Qris','Others'],
+  ['2025-10-31','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-31','Kopi Browni',1,220000,'Tunai','Champion'],
+  ['2025-10-31','Kopi Browni',1,110000,'Qris','Others'],
+  ['2025-10-31','Strawberry Matcha',1,175000,'Qris','Champion'],
+  ['2025-10-31','Aqua',1,85000,'Tunai','Champion'],
+  ['2025-10-31','Kopi Flora',1,155000,'Qris','Champion'],
+  ['2025-10-31','Nasi Jeruk',1,115500,'Tunai','Others'],
+  ['2025-10-31','Kentang Goreng',1,130000,'Tunai','New Customer'],
+  ['2025-10-31','Pisang Goreng Coklat Keju',1,64000,'Qris','Others'],
+  ['2025-10-31','Fresh Mango',1,92000,'Qris','Others'],
+  ['2025-10-31','Kopi Pistachio',1,125000,'Tunai','New Customer'],
+];
+
+const allData = RAW.map(r => ({tgl:r[0], produk:r[1], qty:r[2], monetary:r[3], bayar:r[4], segment:r[5]}));
+
+const COLORS = ['#e74c3c','#9b59b6','#2980b9','#27ae60','#f39c12','#1abc9c','#e67e22','#34495e','#c0392b','#8e44ad','#2471a3','#1e8449','#d35400','#f1c40f','#58d68d','#85c1e9','#f1948a','#aab7b8'];
+
+/* ── VARIAN CHECKBOXES ── */
+const allVarian = [...new Set(allData.map(d=>d.produk))].sort();
+let activeVarian = new Set(allVarian);
+const vEl = document.getElementById('varianList');
+allVarian.forEach(v => {
+  const lbl = document.createElement('label');
+  lbl.className = 'varian-item';
+  const cb = document.createElement('input');
+  cb.type = 'checkbox'; cb.checked = true;
+  cb.onchange = () => { cb.checked ? activeVarian.add(v) : activeVarian.delete(v); applyFilter(); };
+  lbl.appendChild(cb);
+  lbl.append(' ' + v);
+  vEl.appendChild(lbl);
+});
+
+/* ── SEGMENT BARS ── */
+const segs = [{n:'Champion',c:45,col:'#f39c12'},{n:'Others',c:102,col:'#9b59b6'},{n:'New Customer',c:10,col:'#27ae60'}];
+const segEl = document.getElementById('segList');
+segs.forEach(s => {
+  const pct = ((s.c/157)*100).toFixed(1);
+  segEl.innerHTML += `<div class="seg-row">
+    <span class="seg-name">${s.n}</span>
+    <div class="seg-bar-wrap"><div class="seg-bar" style="width:${pct}%;background:${s.col};"></div></div>
+    <span class="seg-pct">${s.c} (${pct}%)</span>
+  </div>`;
+});
+
+/* ── PAYMENT CHART ── */
+new Chart(document.getElementById('paymentChart').getContext('2d'), {
+  type: 'pie',
+  data: { labels:['QRIS','Tunai'], datasets:[{data:[82,75],backgroundColor:['#1a237e','#42a5f5'],borderWidth:0,hoverOffset:5}] },
+  options: { responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed} transaksi`}} }
+  }
+});
+
+/* ── DYNAMIC CHARTS ── */
+let lineC, barC, revC, donutC;
+
+function fmt(n) {
+  if (n >= 1e6) return 'Rp' + (n/1e6).toFixed(2).replace(/\.?0+$/,'') + 'Jt';
+  if (n >= 1e3) return 'Rp' + Math.round(n/1e3) + 'K';
+  return 'Rp' + n;
+}
+
+function buildAll(data) {
+  /* aggregate by date */
+  const dateQty={}, dateRev={};
+  data.forEach(d => {
+    dateQty[d.tgl] = (dateQty[d.tgl]||0) + d.qty;
+    dateRev[d.tgl] = (dateRev[d.tgl]||0) + d.monetary;
+  });
+  const dates = Object.keys(dateQty).sort();
+  const qtyArr = dates.map(d=>dateQty[d]);
+  const revArr = dates.map(d=>dateRev[d]);
+  const lbls = dates.map(d=>d.slice(5));
+
+  /* produk qty */
+  const pQty={};
+  data.forEach(d=>{ pQty[d.produk]=(pQty[d.produk]||0)+d.qty; });
+  const topProd = Object.entries(pQty).sort((a,b)=>b[1]-a[1]).slice(0,15);
+
+  /* produk revenue */
+  const pRev={};
+  data.forEach(d=>{ pRev[d.produk]=(pRev[d.produk]||0)+d.monetary; });
+  const topRev = Object.entries(pRev).sort((a,b)=>b[1]-a[1]).slice(0,12);
+
+  /* KPI */
+  const totalQty = data.reduce((a,b)=>a+b.qty,0);
+  const totalRev = data.reduce((a,b)=>a+b.monetary,0);
+  const peakRev  = Math.max(...revArr);
+  const avgTrx   = data.length ? totalRev/data.length : 0;
+  document.getElementById('kpiProduk').textContent = totalQty;
+  document.getElementById('kpiPendapatan').textContent = fmt(totalRev);
+  document.getElementById('infoTrx').textContent = data.length;
+  document.getElementById('infoProdukUnik').textContent = Object.keys(pQty).length;
+  document.getElementById('avgTrx').textContent = fmt(Math.round(avgTrx));
+  document.getElementById('peakDay').textContent = fmt(peakRev);
+
+  const base = {responsive:true, maintainAspectRatio:false};
+
+  /* LINE */
+  if(lineC) lineC.destroy();
+  lineC = new Chart(document.getElementById('lineChart').getContext('2d'),{
+    type:'line',
+    data:{ labels:lbls, datasets:[{label:'Qty',data:qtyArr, borderColor:'#fdd835',backgroundColor:'rgba(253,216,53,0.1)',fill:true,tension:0.35,pointRadius:2,borderWidth:2,pointBackgroundColor:'#fdd835'}] },
+    options:{...base, plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.07)'},ticks:{color:'#ccc4ee',font:{size:8},maxTicksLimit:12}},
+        y:{grid:{color:'rgba(255,255,255,0.07)'},ticks:{color:'#ccc4ee',font:{size:8}}}
+      }}
+  });
+
+  /* BAR horizontal */
+  if(barC) barC.destroy();
+  barC = new Chart(document.getElementById('barChart').getContext('2d'),{
+    type:'bar',
+    data:{ labels:topProd.map(p=>p[0]), datasets:[{label:'Qty',data:topProd.map(p=>p[1]), backgroundColor:'rgba(253,216,53,0.75)',borderColor:'#fdd835',borderWidth:1,borderRadius:2}] },
+    options:{...base, indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.07)'},ticks:{color:'#ccc4ee',font:{size:9}},beginAtZero:true},
+        y:{grid:{display:false},ticks:{color:'#e0d8ff',font:{size:9}}}
+      }}
+  });
+
+  /* REVENUE BAR */
+  if(revC) revC.destroy();
+  revC = new Chart(document.getElementById('revenueChart').getContext('2d'),{
+    type:'bar',
+    data:{ labels:lbls, datasets:[{label:'Pendapatan',data:revArr, backgroundColor:revArr.map(v=>v>=0?'rgba(100,180,255,0.7)':'rgba(255,100,100,0.7)'),borderRadius:2}] },
+    options:{...base, plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.07)'},ticks:{color:'#ccc4ee',font:{size:8},maxTicksLimit:12}},
+        y:{grid:{color:'rgba(255,255,255,0.07)'},ticks:{color:'#ccc4ee',font:{size:8},callback:v=>fmt(v)}}
+      }}
+  });
+
+  /* DONUT */
+  if(donutC) donutC.destroy();
+  donutC = new Chart(document.getElementById('donutChart').getContext('2d'),{
+    type:'doughnut',
+    data:{ labels:topRev.map(p=>p[0]), datasets:[{data:topRev.map(p=>p[1]), backgroundColor:COLORS.slice(0,topRev.length), borderWidth:1,borderColor:'#7a6bbf',hoverOffset:6}] },
+    options:{...base, cutout:'62%',
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.parsed)}`}}}
+    }
+  });
+
+  /* Donut legend */
+  const totRev = topRev.reduce((a,b)=>a+b[1],0);
+  const dEl = document.getElementById('donutLegend');
+  dEl.innerHTML='';
+  topRev.forEach(([n,v],i)=>{
+    const pct=((v/totRev)*100).toFixed(1);
+    dEl.innerHTML+=`<div class="dleg-item"><span style="width:9px;height:9px;border-radius:50%;background:${COLORS[i]};flex-shrink:0;display:inline-block;"></span><span>${n}: ${fmt(v)} (${pct}%)</span></div>`;
+  });
+}
+
+function applyFilter() {
+  const s = document.getElementById('dateStart').value;
+  const e = document.getElementById('dateEnd').value;
+  const filtered = allData.filter(d => activeVarian.has(d.produk) && d.tgl>=s && d.tgl<=e);
+  buildAll(filtered);
+}
+
+buildAll(allData);
+</script>
+</body>
+</html>
